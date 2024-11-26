@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cabina Fotográfica Retro</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #f2e9dc;
+      text-align: center;
+      color: #333;
+    }
+    #camera {
+      width: 100%;
+      max-width: 400px;
+      border: 5px solid #663300;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    button {
+      background-color: #663300;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+    #countdown {
+      font-size: 50px;
+      color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cabina Fotográfica Retro</h1>
+  <video id="camera" autoplay playsinline></video><br>
+  <button id="photoButton" onclick="iniciarCuentaRegresiva()">Tomar Foto</button>
+  <div id="countdown" style="display:none;"></div>
+
+  <script>
+    let fotosTomadas = 0; // Contador de fotos tomadas
+
+    // Acceso a la cámara
+    async function iniciarCamara() {
+      const video = document.getElementById('camera');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+      } catch (error) {
+        alert('Error al acceder a la cámara: ' + error);
+      }
+    }
+
+    // Inicia la cuenta regresiva de 3 segundos
+    function iniciarCuentaRegresiva() {
+      const countdownElement = document.getElementById('countdown');
+      const button = document.getElementById('photoButton');
+      let countdown = 3;  // Cuenta regresiva de 3 segundos
+      countdownElement.style.display = 'block';
+      countdownElement.innerText = countdown;
+      button.disabled = true;  // Deshabilita el botón durante la cuenta regresiva
+
+      const interval = setInterval(() => {
+        countdown--;
+        countdownElement.innerText = countdown;
+
+        if (countdown === 0) {
+          clearInterval(interval);
+          countdownElement.style.display = 'none';
+          tomarFoto();
+        }
+      }, 1000);
+    }
+
+    // Captura y descarga la foto
+    function tomarFoto() {
+      const video = document.getElementById('camera');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL('image/png');
+      descargarFoto(dataUrl);
+
+      // Incrementar el contador y verificar si alcanzó el límite
+      fotosTomadas++;
+      if (fotosTomadas >= 2) {
+        alert('Sal de la cabina');
+        bloquearBoton();
+      } else {
+        // Espera de 10 segundos antes de permitir tomar otra foto
+        setTimeout(() => {
+          document.getElementById('photoButton').disabled = false; // Habilitar el botón después de 10 segundos
+        }, 10000);
+      }
+    }
+
+    // Descarga la foto automáticamente
+    function descargarFoto(dataUrl) {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `foto_${Date.now()}.png`;
+      link.click();
+    }
+
+    // Bloquea el botón para evitar más fotos
+    function bloquearBoton() {
+      const button = document.getElementById('photoButton');
+      button.disabled = true;
+
+      // Desbloquear después de 10 segundos
+      setTimeout(() => {
+        fotosTomadas = 0; // Reinicia el contador para un nuevo uso
+        button.disabled = false;
+      }, 10000);
+    }
+
+    // Iniciar la cámara al cargar la página
+    window.onload = iniciarCamara;
+  </script>
+</body>
+</html>
